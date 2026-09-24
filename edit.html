@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema_CPE</title>
+    <!-- X-Marçal — github.com/cirleno -->
+    <link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="img/favicon.ico" type="image/x-icon">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/font-awesome.css">
+    <style>
+      body { padding-top: 52px; }
+      .navbar { min-height: 35px; padding-top: 2px; padding-bottom: 2px; }
+      .navbar-brand { padding-top: 0; padding-bottom: 0; font-size: 1.125rem; }
+      .navbar-toggler { padding: 3px 6px; }
+    </style>
+  </head>
+
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <div class="container position-relative">
+        <a class="navbar-brand" href="add.html">
+          <img src="img/x-mar%C3%A7al_Logo.png" alt="Logotipo" style="height: 38px; width: auto;">
+        </a>
+        <span class="position-absolute top-50 start-50 translate-middle text-white fw-semibold">Cadastro, Edição e Pesquisa</span>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Alternar navegação">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link" href="add.html">Cadastro</a></li>
+            <li class="nav-item"><a class="nav-link" href="index.html">Pesquisa</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div id="main" class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h3 class="mb-4">Editar Cadastro!</h3>
+
+          <form id="form-edicao" novalidate>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="campo1" class="form-label">Nome Completo</label>
+                <input type="text" class="form-control" id="campo1" required>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="campo2" class="form-label">Curso</label>
+                <input type="text" class="form-control" id="campo2" required>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="campo3" class="form-label">Data Início</label>
+                <input type="text" class="form-control" id="campo3" placeholder="DD/MM/AAAA" required>
+              </div>
+            </div>
+
+            <div id="mensagem" class="alert alert-danger d-none" role="alert"></div>
+
+            <div class="row">
+              <div class="col-md-12">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a href="index.html" class="btn btn-secondary">Cancelar</a>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="container py-3">
+      <hr />
+      <div class="d-flex justify-content-center">
+        <footer class="text-muted">
+          <p class="mb-0 d-inline-flex align-items-center flex-wrap justify-content-center">Copyright &copy; 2016 by
+            <img src="img/x-mar%C3%A7al_Logo_original.png" alt="X-Marçal" style="height: 34px; width: auto;" class="ms-2">
+            <a href="https://github.com/cirleno?tab=repositories" target="_blank" rel="noopener" aria-label="GitHub" style="color: #181717;">
+              <span class="fab fa-github fa-lg ms-3" aria-hidden="true"></span>
+            </a>
+          </p>
+        </footer>
+      </div>
+    </div>
+
+    <script src="js/bootstrap.js"></script>
+    <script src="js/sistema.js"></script>
+    <script>
+      (function () {
+        var id = Number(Sistema.obterParametro('id'));
+
+        function exibirErros(erros) {
+          var alerta = document.getElementById('mensagem');
+          alerta.innerHTML = erros.map(function (e) { return '<p class="mb-0">' + e + '</p>'; }).join('');
+          alerta.classList.toggle('d-none', erros.length === 0);
+        }
+
+        document.getElementById('form-edicao').addEventListener('submit', function (e) {
+          e.preventDefault();
+          var dados = {
+            nome: document.getElementById('campo1').value,
+            curso: document.getElementById('campo2').value,
+            dataInicio: document.getElementById('campo3').value
+          };
+          var erros = Sistema.validarDados(dados);
+          if (erros.length) {
+            exibirErros(erros);
+            return;
+          }
+          exibirErros([]);
+          Sistema.DataStore.load().then(function () {
+            if (!Sistema.DataStore.update(id, dados)) {
+              window.location.href = 'index.html';
+              return;
+            }
+            window.location.href = 'view.html?id=' + id;
+          });
+        });
+
+        Sistema.DataStore.load().then(function () {
+          var aluno = Sistema.DataStore.findById(id);
+          if (!aluno) {
+            window.location.href = 'index.html';
+            return;
+          }
+          document.getElementById('campo1').value = aluno.nome;
+          document.getElementById('campo2').value = aluno.curso;
+          document.getElementById('campo3').value = aluno.dataInicio;
+        });
+      })();
+    </script>
+  </body>
+</html>

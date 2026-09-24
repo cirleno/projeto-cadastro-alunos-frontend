@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema_CPE</title>
+    <!-- X-Marçal — github.com/cirleno -->
+    <link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="img/favicon.ico" type="image/x-icon">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/font-awesome.css">
+    <style>
+      body { padding-top: 52px; }
+      .navbar { min-height: 35px; padding-top: 2px; padding-bottom: 2px; }
+      .navbar-brand { padding-top: 0; padding-bottom: 0; font-size: 1.125rem; }
+      .navbar-toggler { padding: 3px 6px; }
+      .actions { white-space: nowrap; }
+      #list .table-responsive { overflow-x: auto; touch-action: pan-x; }
+      #list .table { min-width: 720px; }
+    </style>
+  </head>
+
+  <body>
+    <div class="modal fade" id="delete-modal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalLabel">Excluir Item</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            Deseja realmente excluir este item?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="btn-confirmar-exclusao">Sim</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">N&atilde;o</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+<div class="container position-relative">
+        <a class="navbar-brand" href="add.html">
+          <img src="img/x-mar%C3%A7al_Logo.png" alt="Logotipo" style="height: 38px; width: auto;">
+        </a>
+        <span class="position-absolute top-50 start-50 translate-middle text-white fw-semibold">Cadastro, Edição e Pesquisa</span>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Alternar navegação">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link" href="add.html">Cadastro</a></li>
+            <li class="nav-item"><a class="nav-link active" href="index.html">Pesquisa</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div id="main" class="container">
+      <div id="top" class="row align-items-center gy-3">
+        <div class="col-md-3">
+          <h2 class="mb-0">Cadastros...</h2>
+        </div>
+
+        <div class="col-md-6">
+          <div class="input-group">
+            <input class="form-control" id="search" type="text" placeholder="Pesquisar Itens" aria-label="Pesquisar Itens">
+            <button class="btn btn-primary" type="button" id="btn-buscar" aria-label="Buscar">
+              <span class="fas fa-search" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="col-md-3 text-md-end">
+          <a href="add.html" class="btn btn-primary">Novo Cadastro</a>
+        </div>
+      </div>
+
+      <div id="list" class="row">
+        <div class="table-responsive col-md-12">
+          <table class="table table-striped align-middle">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Curso</th>
+                <th>Data Início</th>
+                <th class="actions">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="corpo-tabela">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="bottom" class="row">
+        <div class="col-md-12">
+          <ul class="pagination" id="paginacao">
+          </ul>
+        </div>
+      </div>
+    </div>
+
+<div class="container py-3">
+      <hr />
+      <div class="d-flex justify-content-center">
+        <footer class="text-muted">
+          <p class="mb-0 d-inline-flex align-items-center flex-wrap justify-content-center">Copyright &copy; 2016 by
+            <img src="img/x-mar%C3%A7al_Logo_original.png" alt="X-Marçal" style="height: 35px; width: auto;" class="ms-2">
+            <a href="https://github.com/cirleno?tab=repositories" target="_blank" rel="noopener" aria-label="GitHub" style="color: #181717;">
+              <span class="fab fa-github fa-lg ms-3" aria-hidden="true"></span>
+            </a>
+          </p>
+        </footer>
+      </div>
+    </div>
+
+    <script src="js/bootstrap.js"></script>
+    <script src="js/sistema.js"></script>
+    <script>
+      (function () {
+        var paginaAtual = 1;
+        var idParaExcluir = null;
+
+        function renderizar() {
+          var termo = document.getElementById('search').value;
+          var todos = Sistema.DataStore.search(termo);
+          var totalPaginas = Math.max(1, Math.ceil(todos.length / Sistema.PAGE_SIZE));
+          if (paginaAtual > totalPaginas) { paginaAtual = totalPaginas; }
+          var inicio = (paginaAtual - 1) * Sistema.PAGE_SIZE;
+          var pagina = todos.slice(inicio, inicio + Sistema.PAGE_SIZE);
+          var tbody = document.getElementById('corpo-tabela');
+          if (!pagina.length) {
+            tbody.innerHTML = '<tr><td colspan="5">Nenhum cadastro encontrado.</td></tr>';
+          } else {
+            tbody.innerHTML = pagina.map(function (a) {
+              return '<tr>' +
+                '<td>' + a.id + '</td>' +
+                '<td>' + Sistema.escapeHtml(a.nome) + '</td>' +
+                '<td>' + Sistema.escapeHtml(a.curso) + '</td>' +
+                '<td>' + Sistema.escapeHtml(a.dataInicio) + '</td>' +
+                '<td class="actions">' +
+                  '<a class="btn btn-success btn-sm" href="view.html?id=' + a.id + '">Visualizar</a> ' +
+                  '<a class="btn btn-warning btn-sm" href="edit.html?id=' + a.id + '">Editar</a> ' +
+                  '<a class="btn btn-danger btn-sm" href="#" data-acao="excluir" data-id="' + a.id + '" data-bs-toggle="modal" data-bs-target="#delete-modal">Excluir</a>' +
+                '</td>' +
+              '</tr>';
+            }).join('');
+          }
+          var paginacao = document.getElementById('paginacao');
+          var itens = '';
+          if (paginaAtual > 1) {
+            itens += '<li class="page-item"><a class="page-link" href="#" data-pagina="' + (paginaAtual - 1) + '">&laquo; Anterior</a></li>';
+          } else {
+            itens += '<li class="page-item disabled"><a class="page-link" href="#">&laquo; Anterior</a></li>';
+          }
+          for (var i = 1; i <= totalPaginas; i++) {
+            itens += '<li class="page-item' + (i === paginaAtual ? ' active' : '') + '"><a class="page-link" href="#" data-pagina="' + i + '">' + i + '</a></li>';
+          }
+          if (paginaAtual < totalPaginas) {
+            itens += '<li class="page-item"><a class="page-link" href="#" data-pagina="' + (paginaAtual + 1) + '" rel="next">Próximo &raquo;</a></li>';
+          } else {
+            itens += '<li class="page-item disabled"><a class="page-link" href="#">Próximo &raquo;</a></li>';
+          }
+          paginacao.innerHTML = itens;
+        }
+
+        document.getElementById('paginacao').addEventListener('click', function (e) {
+          var alvo = e.target.closest('[data-pagina]');
+          if (!alvo) { return; }
+          e.preventDefault();
+          paginaAtual = Number(alvo.getAttribute('data-pagina'));
+          renderizar();
+        });
+
+        document.addEventListener('click', function (e) {
+          var alvo = e.target.closest('[data-acao="excluir"]');
+          if (!alvo) { return; }
+          e.preventDefault();
+          idParaExcluir = alvo.getAttribute('data-id');
+        });
+
+        document.getElementById('btn-confirmar-exclusao').addEventListener('click', function () {
+          if (idParaExcluir) {
+            Sistema.DataStore.remove(idParaExcluir);
+            idParaExcluir = null;
+          }
+          bootstrap.Modal.getOrCreateInstance(document.getElementById('delete-modal')).hide();
+          renderizar();
+        });
+
+        document.getElementById('btn-buscar').addEventListener('click', function () {
+          paginaAtual = 1;
+          renderizar();
+        });
+
+        document.getElementById('search').addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            paginaAtual = 1;
+            renderizar();
+          }
+        });
+
+        Sistema.DataStore.load().then(renderizar);
+      })();
+    </script>
+  </body>
+</html>
